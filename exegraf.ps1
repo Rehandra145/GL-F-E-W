@@ -93,7 +93,8 @@ function Open-Project {
     Write-Host "$CYAN============================================$RESET"
     Write-Host ""
 
-    $projects = Get-ChildItem -Directory | Where-Object { $_.Name -ne "Template" }
+$projects = Get-ChildItem -Directory | Where-Object { $_.Name -ne "Template" }
+
     if (-not $projects) {
         Write-Host "$YELLOW[INFO]$RESET No projects found"
         Start-Sleep -Seconds 2
@@ -133,7 +134,7 @@ function Open-Project {
     try {
         Set-Location $selected.FullName
         Write-Host "$YELLOW[STATUS]$RESET Compiling project..."
-        & g++ main.cpp -o bin/main.exe -Iinclude -Llib -lglfw3 -lglew32 -lopengl32 -lgdi32
+        & g++ main.cpp -o bin/main.exe -Iinclude -Llib -lglfw3 -lglew32 -lopengl32 -lgdi32 -lglu32 -lfreeglut
         
         if (-not (Test-Path "bin\main.exe")) {
             throw "Compilation failed"
@@ -143,6 +144,7 @@ function Open-Project {
         Start-Process code "." -NoNewWindow
         Start-Process "bin\main.exe" -NoNewWindow
         Start-Sleep -Seconds 2
+        Set-Location "C:\Komgraf"
     }
     catch {
         Write-Host "$RED[ERROR]$RESET Failed to compile! Please check main.cpp."
