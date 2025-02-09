@@ -61,7 +61,7 @@
     "java": "cd $dir && javac $fileName && java $fileNameWithoutExt",
     "c": "cd $dir && gcc $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
     "zig": "zig run",
-    "cpp": "cd $dir && g++ $fileName -o bin\\$fileNameWithoutExt -Iinclude -Llib -lglfw3 -lglew32 -lopengl32 -lgdi32 && bin\\$fileNameWithoutExt",
+    "cpp": "cd $dir && g++ $fileName -o bin\\$fileNameWithoutExt -Iinclude -Llib -lglfw3 -lglew32 -lopengl32 -lgdi32 -lglu32 -lfreeglut && bin\\$fileNameWithoutExt",
     "objective-c": "cd $dir && gcc -framework Cocoa $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
     "php": "php",
     "python": "python -u",

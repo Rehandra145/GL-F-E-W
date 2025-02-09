@@ -1,148 +1,169 @@
-//if your vscode showing eror in include tag, try to compile it manualy, if you dont know how to do it, just ask me
-//if you want to run this code, you need to install glfw and glew first then edit your system environment variable
-//if you dont know how to install it, just ask me
-//cpp intellicence is not working in this file, so you need to write the code manually
-//if you want to use intellicence, just create new file and copy paste the code
-//if you have any question, just ask me
-//vs code ekstension is suck
-
-
-//mandatory lib (dont delete this pls)
-#include <glew.h> //again, dont delete this shit if you dont want to cry in the middle of the night
-#include <glfw3.h> //and this too
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <GL/freeglut.h>
 #include <iostream>
 
-//additional lib
-#include <cmath>
-
-
-
-//you can start to code right here
-
-const int SEGMENTS = 100;
-const float PI = 3.14159265359;
-
-bool showText = true;
-double lastTime = 0.0;
-double blinkInterval = 0.5;
-
-// Variabel untuk aspect ratio
-float aspectRatio = 1.0f;
-
-void framebuffer_size_callback(GLFWwindow*window, int width, int height) {
-    glViewport(0, 0, width, height);
-    aspectRatio = (float)width / (float)height;
-}
-
-
-void drawCircle(float cx, float cy, float radius, float r, float g, float b) {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-aspectRatio, aspectRatio, -1.0f, 1.0f, -1.0f, 1.0f);
-    
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    
-    glColor3f(r, g, b);
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex2f(cx, cy);
-    for (int i = 0; i <= SEGMENTS; i++) {
-        float angle = 2.0f * PI * i / SEGMENTS;
-        float x = cx + radius * cos(angle);
-        float y = cy + radius * sin(angle);
-        glVertex2f(x, y);
+// Vertex Shader source code
+const char* vertexShaderSource = R"(
+    #version 330 core
+    layout (location = 0) in vec3 aPos;
+    void main() {
+        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
     }
-    glEnd();
+)";
+
+// Fragment Shader source code
+const char* fragmentShaderSource = R"(
+    #version 330 core
+    out vec4 FragColor;
+    void main() {
+        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+    }
+)";
+
+// Callback function for GLFW errors
+void error_callback(int error, const char* description) {
+    std::cerr << "Error: " << description << std::endl;
 }
 
-void drawText(float startY) {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-aspectRatio, aspectRatio, -1.0f, 1.0f, -1.0f, 1.0f);
-    
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    
-    glColor3f(1.0f, 1.0f, 1.0f);
-    float charWidth = 0.05f;
-    float charHeight = 0.1f;
-    float charSpacing = 0.02f;
-    
-    float totalWidth = (3 * charWidth) + (2 * charSpacing);
-    float x = -totalWidth/2.0f;
-    float y = startY;
-
-    glBegin(GL_LINES);
-    glVertex2f(x, y + charHeight); glVertex2f(x + charWidth, y + charHeight);
-    glVertex2f(x + charWidth/2, y + charHeight); glVertex2f(x + charWidth/2, y);
-    glEnd();
-    x += charWidth + charSpacing;
-
-    glBegin(GL_LINES);
-    glVertex2f(x, y + charHeight); glVertex2f(x, y);
-    glVertex2f(x, y + charHeight); glVertex2f(x + charWidth, y + charHeight);
-    glVertex2f(x, y + charHeight/2); glVertex2f(x + charWidth, y + charHeight/2);
-    glVertex2f(x, y); glVertex2f(x + charWidth, y);
-    glEnd();
-    x += charWidth + charSpacing;
-
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(x + charWidth, y + charHeight);
-    glVertex2f(x, y + charHeight);
-    glVertex2f(x, y + charHeight/2);
-    glVertex2f(x + charWidth, y + charHeight/2);
-    glVertex2f(x + charWidth, y);
-    glVertex2f(x, y);
-    glEnd();
+// Callback function for window resize
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
 }
 
-int main() {
+// Process input
+void processInput(GLFWwindow* window) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+
+int main(int argc, char** argv) {
+    // Initialize GLUT (needed for some utility functions)
+    glutInit(&argc, argv);
+    
+    // Initialize GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
-
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Eye Simulation with Blinking Text", NULL, NULL);
-    if (!window) {
+    
+    // Set error callback
+    glfwSetErrorCallback(error_callback);
+    
+    // Configure GLFW
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    
+    // Create window
+    GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Template", NULL, NULL);
+    if (window == NULL) {
         std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
     }
-    
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
+    
+    // Initialize GLEW
     if (glewInit() != GLEW_OK) {
         std::cerr << "Failed to initialize GLEW" << std::endl;
         return -1;
     }
-
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    framebuffer_size_callback(window, width, height);
-
+    
+    // Set callbacks
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    
+    // Create and compile vertex shader
+    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glCompileShader(vertexShader);
+    
+    // Check vertex shader compilation
+    int success;
+    char infoLog[512];
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        std::cerr << "Vertex shader compilation failed:\n" << infoLog << std::endl;
+    }
+    
+    // Create and compile fragment shader
+    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glCompileShader(fragmentShader);
+    
+    // Check fragment shader compilation
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        std::cerr << "Fragment shader compilation failed:\n" << infoLog << std::endl;
+    }
+    
+    // Create shader program
+    unsigned int shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+    
+    // Check shader program linking
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        std::cerr << "Shader program linking failed:\n" << infoLog << std::endl;
+    }
+    
+    // Delete shaders after linking
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    
+    // Set up vertex data
+    float vertices[] = {
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f,
+         0.0f,  0.5f, 0.0f
+    };
+    
+    // Create and bind Vertex Array Object (VAO)
+    unsigned int VAO;
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+    
+    // Create and bind Vertex Buffer Object (VBO)
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    
+    // Set vertex attributes
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    
+    // Render loop
     while (!glfwWindowShouldClose(window)) {
-        double currentTime = glfwGetTime();
-        if (currentTime - lastTime >= blinkInterval) {
-            showText = !showText;
-            lastTime = currentTime;
-        }
-
+        // Input
+        processInput(window);
+        
+        // Rendering
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        drawCircle(0.0f, 0.2f, 0.4f, 1.0f, 1.0f, 1.0f);
-        drawCircle(0.0f, 0.2f, 0.2f, 0.2f, 0.3f, 1.0f);
-        drawCircle(0.0f, 0.2f, 0.08f, 0.0f, 0.0f, 0.0f);
-
-        if (showText) {
-            drawText(-0.4f);
-        }
-
+        
+        // Draw triangle
+        glUseProgram(shaderProgram);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        
+        // Swap buffers and poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    glfwDestroyWindow(window);
+    
+    // Cleanup
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteProgram(shaderProgram);
+    
+    // Terminate GLFW
     glfwTerminate();
+    
     return 0;
 }
